@@ -5,40 +5,10 @@ package require Tk 8.5 ;# ttk
 package require tdbc
 
 package require cargocult::tk
+package require cargocult::widgets
 package require snit 2.2
 
 namespace eval tkdb {
-
-proc KNOWN_DRIVERS {} {
-	list {*}{
-		mysql
-		odbc
-		oratcl
-		postgres
-		sqlite3
-	}
-}
-
-variable loaded_drivers [dict create]
-
-proc load_driver {name package} {
-	if {[catch [list package require $package] msg]} {
-		return -code error "couldn't load $name driver: $msg"
-	} else {
-		dict set loaded_drivers $name $msg
-		return $msg
-	}
-}
-
-proc driversearch {} {
-	variable loaded_drivers
-
-	foreach driver [KNOWN_DRIVERS] {
-		if {[catch [list load_driver $driver tdbc::$driver] msg]} {
-			puts stderr "warning: $msg"
-		}
-	}
-}
 
 namespace eval knobs {
 	snit::widgetadaptor mysql {
@@ -74,7 +44,6 @@ namespace eval knobs {
 
 	snit::widget odbc {
 		hulltype ttk::frame
-
 		component optrows
 
 		delegate method * to hull
@@ -267,47 +236,111 @@ namespace eval knobs {
 	}
 }
 
-snit::widget connectpane {
-	hulltype ttk::frame
+snit::widget connectdialog {
+	hulltype toplevel
 
 	component knobs
 
 	delegate method * to hull
 	delegate option * to hull
-	delegate method connect to knobs
 
-	option -driver -default sqlite3 -configuremethod Set_driver
-	method Set_driver {opt val} {
-		set options($opt) $val
-		Change_driver
+	option -driver -readonly yes -default other
+
+	constructor {args} {
+		$self configurelist $args
+
+		set f [ttk::frame $win.f]
+
+		install knobs using knobs::[$self cget -driver] $f.knobs
+		ttk::button $f.connect -text "Connect" -command [mymethod Connect]
+
+		grid $knobs -sticky nsew
+		grid $f.connect -sticky se
+		grid rowconfigure $f 0 -weight 1
+		grid columnconfigure $f 0 -weight 1
+
+		grid $f -sticky nsew
+		grid rowconfigure $win 0 -weight 1
+		grid columnconfigure $win 0 -weight 1
 	}
 
-	constructor args {
-		ttk::label $win.driverl -text "Driver:"
-		ttk::combobox $win.driver \
-			-textvariable [myvar options(-driver)] \
-			-values [concat [KNOWN_DRIVERS] other]
-		ttk::frame $win.knobpane
-
-		install knobs using ttk::label $win.knobpane.victim -text "Foo!"
-
-		bind $win.driver <<ComboboxSelected>> [mymethod Change_driver]
-
-		grid $win.driverl  $win.driver -sticky new
-		grid $win.knobpane -           -sticky sew
-
-		$self configureList $args
+	method Connect {} {
+		event generate . <<NewConnection>> -data [$knobs connect]
+		destroy $win
 	}
+}
 
-	method Change_driver {} {
-		destroy $knobs
-		if {[$self cget -driver] eq {}} {
-			return ;# leave the knobpane empty
-		} elif {[$self cget -driver] in [KNOWN_DRIVERS]} {
-			install knobs using knobs::[self cget -driver]
-		} else {
-			install knobs using knobs::other
+variable KNOWN_DRIVERS {
+	mysql {MySQL}
+	odbc {ODBC}
+	postgres {PostgreSQL}
+	sqlite3 {Existing SQLite3 database}
+}
+
+variable loaded_drivers
+
+proc load_driver {name package} {
+	variable loaded_drivers
+
+	if {[catch [list package require $package] msg]} {
+		return -code error "couldn't load $name driver: $msg"
+	} else {
+		dict set loaded_drivers $name $msg
+		return $msg
+	}
+}
+
+proc driversearch {} {
+	variable KNOWN_DRIVERS
+
+	foreach driver [dict keys $KNOWN_DRIVERS] {
+		if {[catch [list load_driver $driver tdbc::$driver] msg]} {
+			puts stderr "warning: $msg"
 		}
+	}
+}
+
+proc connectmenu {path rootwin} {
+	variable KNOWN_DRIVERS
+	variable loaded_drivers
+
+	set menu [menu $path]
+
+	driversearch
+	dict for {driver version} $loaded_drivers {
+		$menu add command -command [namespace code [
+			list show_connectdialog $driver $rootwin
+		]] -label [dict get $KNOWN_DRIVERS $driver]...
+
+		if {$driver eq {sqlite3}} {
+			$menu add command -command [
+				namespace code [list new_sqlite $rootwin]
+			] -label {New SQLite3 database...}
+		}
+	}
+
+	$menu add command -command [namespace code [
+		list show_connectdialog other $rootwin
+	]] -label {Other TDBC driver...}
+}
+
+proc show_connectdialog {driver rootwin} {
+	set dialog [
+		connectdialog .[cargocult::gensym connectdialog] -driver $driver
+	]
+
+	cargocult::modalize $dialog $rootwin
+}
+
+proc new_sqlite {rootwin} {
+	if {[set dbfile [tk_getSaveFile -filetypes {
+		{{SQLite databases} {.sqlite} BINA}
+		{{SQLite databases} {.db}     BINA}
+		{{All files}        *}
+	} -parent $rootwin -title "Create new SQLite database file"]] ne {}} {
+		event generate . <<NewConnection>> -data [
+			tdbc::sqlite3::connection new $dbfile
+		]
 	}
 }
 
