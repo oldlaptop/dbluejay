@@ -246,18 +246,25 @@ snit::widget connectdialog {
 
 	option -driver -readonly yes -default other
 
+	variable nickname {}
+	typevariable nickserial 0
+
 	constructor {args} {
 		$self configurelist $args
+
+		set nickname "Unnamed [incr nickserial] ([$self cget -driver])"
 
 		set f [ttk::frame $win.f]
 
 		install knobs using knobs::[$self cget -driver] $f.knobs
+		ttk::label $f.namel -text "Nickname:"
+		ttk::entry $f.nameen -textvariable [myvar nickname]
 		ttk::button $f.connect -text "Connect" -command [mymethod Connect]
 
-		grid $knobs -sticky nsew
-		grid $f.connect -sticky se
+		grid $knobs   -         -          -sticky nsew
+		grid $f.namel $f.nameen $f.connect -sticky sew
 		grid rowconfigure $f 0 -weight 1
-		grid columnconfigure $f 0 -weight 1
+		grid columnconfigure $f 1 -weight 1
 
 		grid $f -sticky nsew
 		grid rowconfigure $win 0 -weight 1
@@ -265,7 +272,9 @@ snit::widget connectdialog {
 	}
 
 	method Connect {} {
-		event generate . <<NewConnection>> -data [$knobs connect]
+		event generate [winfo parent $win] <<NewConnection>> -data [
+			dict create db [$knobs connect] nickname $nickname
+		]
 		destroy $win
 	}
 }
@@ -326,7 +335,7 @@ proc connectmenu {path rootwin} {
 
 proc show_connectdialog {driver rootwin} {
 	set dialog [
-		connectdialog .[cargocult::gensym connectdialog] -driver $driver
+		connectdialog $rootwin.[cargocult::gensym connectdialog] -driver $driver
 	]
 
 	cargocult::modalize $dialog $rootwin
