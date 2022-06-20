@@ -10,6 +10,13 @@ package require snit 2.2
 
 namespace eval dbluejay {
 
+# Knob widgets: allow the user to twiddle the various divers knobs that pertain
+# to TDBC database connections. Except as noted, the megawidgets in this
+# namespace correspond to TDBC drivers of the same names. Each widget is
+# expected to support the connect method, which should return a dict of the form
+# expected by dbluejay::metabrowser's add_connection method, hopefully
+# describing a brand-new TDBC database connection that matches the user's
+# specifications.
 namespace eval knobs {
 	snit::widgetadaptor mysql {
 		delegate method * to hull
@@ -44,7 +51,7 @@ namespace eval knobs {
 
 	snit::widget odbc {
 		hulltype ttk::frame
-		component optrows
+		component optrows ;# cargocult::dynrows
 
 		delegate method * to hull
 		delegate option * to hull
@@ -108,6 +115,7 @@ namespace eval knobs {
 			$self configurelist $args
 		}
 
+		# Translate the various knobs into an ODBC connection string.
 		method Gen_connstr {} {
 			dict set conndict $mode [set $mode]
 			foreach row [$optrows rows] {
@@ -204,6 +212,11 @@ namespace eval knobs {
 		}
 	}
 
+	# Generic widget allowing the user to specify a custom TDBC driver, by
+	# specifying the name of a new package to load and a Tcl command to
+	# evaluate to get a TDBC database handle. This is, by anybody's
+	# standard, a very direct code-execution vector, and should presumably
+	# be treated accordingly.
 	snit::widget other {
 		hulltype ttk::frame
 
@@ -236,14 +249,23 @@ namespace eval knobs {
 	}
 }
 
+# Top-level window wrapping one of the knobs widgets above, also used to twiddle
+# driver-independent knobs (currently knob, singular, the connection's human-
+# readable "nickname"). Generates the synthetic event <<NewConnection>> upon
+# the user's choosing to create a new database connection (at which time this
+# window will destroy itself), with the connection's object-command in its -data
+# field.
 snit::widget connectdialog {
 	hulltype toplevel
 
-	component knobs
+	component knobs ;# any member of dbluejay::knobs above
 
 	delegate method * to hull
 	delegate option * to hull
 
+	# The name of a specific member of dbluejay::knobs to wrap, which as
+	# explained above is either also the name of a TDBC driver or the word
+	# "other".
 	option -driver -readonly yes -default other
 
 	variable nickname {}
@@ -288,6 +310,7 @@ variable KNOWN_DRIVERS {
 
 variable loaded_drivers
 
+# Load a TDBC driver by name (in KNOWN_DRIVERS above) and package name.
 proc load_driver {name package} {
 	variable loaded_drivers
 
@@ -299,6 +322,7 @@ proc load_driver {name package} {
 	}
 }
 
+# Iterate over KNOWN_DRIVERS above, loading whichever among them can be loaded.
 proc driversearch {} {
 	variable KNOWN_DRIVERS
 
@@ -309,6 +333,10 @@ proc driversearch {} {
 	}
 }
 
+# Creates a [menu] with path $path containing options corresponding to each
+# currently-loadable TDBC driver (and "other"), each of which spawns a
+# connectdialog wrapping the appropriate knobs:: widget. connectdialogs will be
+# modal with respect to $rootwin.
 proc connectmenu {path rootwin} {
 	variable KNOWN_DRIVERS
 	variable loaded_drivers
@@ -333,6 +361,8 @@ proc connectmenu {path rootwin} {
 	]] -label {Other TDBC driver...}
 }
 
+# Show a connectdialog widget wrapping the knobs:: member $driver, modal with
+# respect to $rootwin.
 proc show_connectdialog {driver rootwin} {
 	set dialog [
 		connectdialog $rootwin.[cargocult::gensym connectdialog] -driver $driver
@@ -341,6 +371,9 @@ proc show_connectdialog {driver rootwin} {
 	cargocult::modalize $dialog $rootwin
 }
 
+# Open a tdbc::sqlite3::connection object on a new file chosen by the user, and
+# generate a <<NewConnection>> event from the root window, with the object-
+# command in its -data field.
 proc new_sqlite {rootwin} {
 	if {[set dbfile [tk_getSaveFile -filetypes {
 		{{SQLite databases} {.sqlite} BINA}

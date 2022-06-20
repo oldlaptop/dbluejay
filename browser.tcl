@@ -9,19 +9,21 @@ package provide application-dbluejay 0.1
 
 namespace eval dbluejay {
 
+# Megawidget for browsing a single database connection.
 snit::widget browser {
 	hulltype ttk::frame
 
-	component sidebar
-	component table
-	component code
+	component sidebar ;# dbluejay::dbsidebar
+	component table   ;# dbluejay::rspager
+	component code    ;# dbluejay::queryeditor
 
-	component lrsash
-	component tbsash
+	component lrsash ;# ttk::panedwindow
+	component tbsash ;# ttk::panedwindow
 
 	delegate method * to hull
 	delegate option * to hull
 
+	# The TDBC database handle to browse
 	option -db -default {} -configuremethod Set_db
 	method Set_db {opt val} {
 		set options($opt) $val
@@ -30,6 +32,7 @@ snit::widget browser {
 		}
 	}
 
+	# If true, close the database connection in -db in the destructor.
 	option -claimdb -default false
 
 	constructor {args} {
@@ -64,6 +67,8 @@ snit::widget browser {
 		}
 	}
 
+	# Arrange for $table and $sidebar eventually to reflect exciting new
+	# changes the user has hopefully provided in $code
 	method sync_sql {} {
 		$table configure \
 			-sql [$code sql] \
@@ -72,10 +77,11 @@ snit::widget browser {
 	}
 }
 
+# Top-level DBluejay window; creates and pages through multiple browser widgets
 snit::widget metabrowser {
 	hulltype toplevel
 
-	component nb
+	component nb ;# ttk::notebook, fills the entire toplevel
 
 	delegate method * to hull
 	delegate option * to hull
@@ -100,6 +106,12 @@ snit::widget metabrowser {
 		wm minsize $self 300 200
 	}
 
+	# Given a dict with the following keys:
+	#
+	# db:       a TDBC database handle
+	# nickname: a human-readable name for the database handle
+	#
+	# adds a new browser tab over the database handle to $nb
 	method add_connection {conn_info} {
 		$nb add [browser $win.[cargocult::gensym browser] \
 			-db [dict get $conn_info db] -claimdb true

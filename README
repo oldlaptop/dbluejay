@@ -1,0 +1,10 @@
+DBlueJay is a general-purpose database GUI, to TDBC what dbeaver is to JDBC,
+but like a blue jay it weighs much less than a beaver. (Hopefully it is less
+loud and obnoxious than real blue jays.) In its current form it may be regarded
+as an experiment in building a universal database browser from as little code as
+possible (currently some 600SLOC, which datum is "generated using David
+A. Wheeler's SLOCCount"), but it is likely to grow in the future (though not to
+beaver-like proportions).
+
+Documentation other than the file you're reading may at this time be found
+inline in the source code.
