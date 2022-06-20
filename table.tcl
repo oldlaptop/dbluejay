@@ -3,7 +3,7 @@ package require Tk 8.5
 package require snit 2.2
 package require tdbc
 
-namespace eval tkdb {
+namespace eval dbluejay {
 
 snit::widget rstable {
 	hulltype ttk::frame
@@ -148,4 +148,4 @@ snit::widgetadaptor rspager {
 	}
 }
 
-} ;# namespace eval tkdb
+} ;# namespace eval dbluejay

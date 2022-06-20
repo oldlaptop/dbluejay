@@ -1,5 +1,5 @@
-namespace eval tkdb::personality {
+namespace eval dbluejay::personality {
 
 proc none {args} { return {} }
 
-} ;# namespace eval tkdb::personality
+} ;# namespace eval dbluejay::personality

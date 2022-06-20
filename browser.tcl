@@ -5,7 +5,7 @@ package require Tk 8.5 ;# ttk
 package require cargocult
 package require snit 2.2
 
-namespace eval tkdb {
+namespace eval dbluejay {
 
 snit::widget browser {
 	hulltype ttk::frame
@@ -105,4 +105,4 @@ snit::widget metabrowser {
 	}
 }
 
-} ;# namespace eval tkdb
+} ;# namespace eval dbluejay

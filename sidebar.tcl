@@ -1,7 +1,7 @@
 package require Tk 8.5
 package require snit 2.2
 
-namespace eval tkdb {
+namespace eval dbluejay {
 
 snit::widgetadaptor dbsidebar {
 	delegate method * to hull
@@ -14,7 +14,7 @@ snit::widgetadaptor dbsidebar {
 	}
 
 	# no personality by default (empty string for all "methods")
-	option -personality -default ::tkdb::personality::none
+	option -personality -default ::dbluejay::personality::none
 
 	constructor {args} {
 		installhull using ttk::treeview -columns {
@@ -70,4 +70,4 @@ snit::widgetadaptor dbsidebar {
 	}
 }
 
-} ;# namespace eval tkdb
+} ;# namespace eval dbluejay

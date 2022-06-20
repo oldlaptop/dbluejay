@@ -1,7 +1,7 @@
 package require Tk 8.5
 package require snit 2.2
 
-namespace eval tkdb {
+namespace eval dbluejay {
 
 snit::widget queryeditor {
 	hulltype ttk::frame
@@ -76,4 +76,4 @@ snit::widget queryeditor {
 	}
 }
 
-} ;# namespace eval tkdb
+} ;# namespace eval dbluejay

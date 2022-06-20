@@ -8,7 +8,7 @@ package require cargocult::tk
 package require cargocult::widgets
 package require snit 2.2
 
-namespace eval tkdb {
+namespace eval dbluejay {
 
 namespace eval knobs {
 	snit::widgetadaptor mysql {
@@ -353,4 +353,4 @@ proc new_sqlite {rootwin} {
 	}
 }
 
-} ;# namespace eval tkdb
+} ;# namespace eval dbluejay
