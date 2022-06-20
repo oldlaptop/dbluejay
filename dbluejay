@@ -1,0 +1,8 @@
+#! /usr/bin/env tclsh
+
+package require application-dbluejay
+
+wm withdraw .
+
+dbluejay::metabrowser .dbluejay
+wm protocol .dbluejay WM_DELETE_WINDOW { exit }

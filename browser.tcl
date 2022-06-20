@@ -5,6 +5,8 @@ package require Tk 8.5 ;# ttk
 package require cargocult
 package require snit 2.2
 
+package provide application-dbluejay 0.1
+
 namespace eval dbluejay {
 
 snit::widget browser {
