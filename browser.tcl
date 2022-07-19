@@ -81,13 +81,13 @@ snit::widget browser {
 snit::widget metabrowser {
 	hulltype toplevel
 
-	component nb ;# ttk::notebook, fills the entire toplevel
+	component nb ;# cargocult::cnotebook, fills the entire toplevel
 
 	delegate method * to hull
 	delegate option * to hull
 
 	constructor {args} {
-		install nb using ttk::notebook $win.nb
+		install nb using cargocult::cnotebook $win.nb
 
 		menu $win.main
 		connectmenu $win.main.connect $win
