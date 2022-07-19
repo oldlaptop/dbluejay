@@ -6,5 +6,12 @@ possible (currently some 600SLOC, which datum is "generated using David
 A. Wheeler's SLOCCount"), but it is likely to grow in the future (though not to
 beaver-like proportions).
 
+Installation should be reasonably straightforward with the included Makefile;
+try running the default target for more information. Besides Tcl and Tk
+themselves, you'll need TDBC and an appropriate selection of TDBC drivers (this
+may or may not be a separate package from Tcl itself on free *NIX systems),
+tcllib (for Snit), and my libcargocult, the installation procedure for which
+is very much like that for DBlueJay (https://github.com/oldlaptop/libcargocult).
+
 Documentation other than the file you're reading may at this time be found
 inline in the source code.
