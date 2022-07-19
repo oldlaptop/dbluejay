@@ -9,6 +9,8 @@ package provide application-dbluejay 0.1
 
 namespace eval dbluejay {
 
+variable base [file dirname [info script]]
+
 # Megawidget for browsing a single database connection.
 snit::widget browser {
 	hulltype ttk::frame
@@ -117,6 +119,16 @@ snit::widget metabrowser {
 			-db [dict get $conn_info db] -claimdb true
 		] -text [dict get $conn_info nickname]
 	}
+}
+
+# Reads the application's window icons and returns a list of Tk images suitable
+# for [wm iconphoto].
+proc icon {} {
+	variable base
+
+	return [lmap size {256 32} {
+		image create photo -file [file join $base icon-${size}x${size}.png]
+	}]
 }
 
 } ;# namespace eval dbluejay

@@ -6,3 +6,4 @@ wm withdraw .
 
 dbluejay::metabrowser .dbluejay
 wm protocol .dbluejay WM_DELETE_WINDOW { exit }
+wm iconphoto .dbluejay {*}[dbluejay::icon]
