@@ -3,11 +3,15 @@ package require snit 2.2
 
 namespace eval dbluejay {
 
-# Single-column hierarchical ttk::treeview listing various interesting and
-# uninteresting items contained within a TDBC-handled database.
-snit::widgetadaptor dbsidebar {
+# Single-column hierarchical ttk::treeview and scrollbar listing various
+# interesting and uninteresting items contained within a TDBC-handled database.
+snit::widget dbsidebar {
+	hulltype ttk::frame
 	delegate method * to hull
 	delegate option * to hull
+
+	component tree   ;# ttk::treeview
+	component scroll ;# ttk::scrollbar
 
 	# TDBC database handle to introspect.
 	option -db -default {} -configuremethod Set_db
@@ -22,8 +26,19 @@ snit::widgetadaptor dbsidebar {
 	option -personality -default ::dbluejay::personality::none
 
 	constructor {args} {
-		installhull using ttk::treeview -columns {
+		install tree using ttk::treeview $win.tree -columns {
 		} -show tree
+		install scroll using ttk::scrollbar $win.scroll -command [
+			list $tree yview
+		]
+
+		$tree configure -yscrollcommand [list $scroll set]
+
+		grid $tree $scroll -sticky ns
+		grid configure $tree -sticky nsew
+
+		grid rowconfigure $win 0 -weight 1
+		grid columnconfigure $win 0 -weight 1
 
 		$self configurelist $args
 	}
@@ -36,14 +51,14 @@ snit::widgetadaptor dbsidebar {
 			return false
 		}
 
-		$hull delete [$hull children {}]
+		$tree delete [$tree children {}]
 
 		# All personalities have the tdbc tables and columns methods
-		$hull insert {} end -id tableroot -text Tables -open true
+		$tree insert {} end -id tableroot -text Tables -open true
 		foreach table [dict keys [[$self cget -db] tables]] {
-			set tableitem [$hull insert tableroot end -text $table]
+			set tableitem [$tree insert tableroot end -text $table]
 			dict for {column attrs} [[$self cget -db] columns $table] {
-				$hull insert $tableitem end -text [
+				$tree insert $tableitem end -text [
 					format "%s %s %s" $column [
 						dict get $attrs type
 					] [
@@ -72,7 +87,7 @@ snit::widgetadaptor dbsidebar {
 		#                           display as sub-items of this item
 		#                           (columns of a view?)
 		foreach frob [[$self cget -personality] frobs] {
-			set frobroot [$hull insert {} end -text [
+			set frobroot [$tree insert {} end -text [
 				dict get $frob name
 			]] -open true
 			foreach fritem [
@@ -80,11 +95,11 @@ snit::widgetadaptor dbsidebar {
 					dict get $frob method [$self cget -db]
 				]
 			] {
-				set fritemroot [$hull insert $frobroot end -text [
+				set fritemroot [$tree insert $frobroot end -text [
 					dict get $fritem name
 				]
 				foreach subfrob [dict get $fritem subfrobs] {
-					$hull insert $fritemroot end -text $subfrob
+					$tree insert $fritemroot end -text $subfrob
 				}
 			}
 		}

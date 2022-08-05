@@ -24,13 +24,19 @@ snit::widget queryeditor {
 	constructor {args} {
 		$self configurelist $args
 
-		install editor using text $win.table
+		install editor using text $win.table -wrap none
 		install vscroll using ttk::scrollbar $win.vscroll -command [
 			list $editor yview
 		] -orient vertical
 		install hscroll using ttk::scrollbar $win.hscroll -command [
 			list $editor xview
 		] -orient horizontal
+
+		$editor configure -xscrollcommand [
+			list $hscroll set
+		] -yscrollcommand [
+			list $vscroll set
+		]
 
 		ttk::frame $win.cmd
 
