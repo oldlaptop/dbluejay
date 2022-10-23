@@ -96,6 +96,10 @@ namespace eval sqlite3 {
 	}
 	namespace export frobs
 
+	# As for the none personality, but we want to render the names
+	# differently, since we have a more-faithful rendering of the
+	# database's name for each relation, and we want to indicate whether
+	# each relation is a table or a view.
 	proc tables {db} {
 		[namespace parent]::none::tables $db {
 			apply {{table attrs} {
