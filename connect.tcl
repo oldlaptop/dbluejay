@@ -47,6 +47,10 @@ namespace eval knobs {
 		method connect {} {
 			tdbc::mysql::connection new {*}[$self option_list]
 		}
+
+		method personality {} {
+			return none
+		}
 	}
 
 	snit::widget odbc {
@@ -133,6 +137,10 @@ namespace eval knobs {
 			$self Gen_connstr
 			tdbc::odbc::connection new $connstr
 		}
+
+		method personality {} {
+			return none
+		}
 	}
 
 	snit::widgetadaptor postgres {
@@ -169,6 +177,10 @@ namespace eval knobs {
 
 		method connect {} {
 			tdbc::postgres::connection new {*}[$self option_list]
+		}
+
+		method personality {} {
+			return none
 		}
 	}
 
@@ -210,6 +222,10 @@ namespace eval knobs {
 				{{All files}        *}
 			} -parent $win -title "Select existing SQLite database file"]
 		}
+
+		method personality {} {
+			return sqlite3
+		}
 	}
 
 	# Generic widget allowing the user to specify a custom TDBC driver, by
@@ -246,6 +262,10 @@ namespace eval knobs {
 			package require $package
 			eval $conncmd
 		}
+
+		method personality {} {
+			return none
+		}
 	}
 }
 
@@ -253,8 +273,11 @@ namespace eval knobs {
 # driver-independent knobs (currently knob, singular, the connection's human-
 # readable "nickname"). Generates the synthetic event <<NewConnection>> upon
 # the user's choosing to create a new database connection (at which time this
-# window will destroy itself), with the connection's object-command in its -data
-# field.
+# window will destroy itself), with its -data field containing a dict with the
+# following keys:
+#     db:          the new database connection's TDBC handle
+#     nickname:    User-visible nickname of this connection
+#     personality: Name of the database personality to use (see personality.tcl)
 snit::widget connectdialog {
 	hulltype toplevel
 
@@ -295,7 +318,10 @@ snit::widget connectdialog {
 
 	method Connect {} {
 		event generate [winfo parent $win] <<NewConnection>> -data [
-			dict create db [$knobs connect] nickname $nickname
+			dict create \
+				db [$knobs connect] \
+				nickname $nickname \
+				personality [$knobs personality]
 		]
 		destroy $win
 	}

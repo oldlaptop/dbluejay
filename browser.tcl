@@ -25,6 +25,8 @@ snit::widget browser {
 	delegate method * to hull
 	delegate option * to hull
 
+	delegate option -personality to sidebar
+
 	# The TDBC database handle to browse
 	option -db -default {} -configuremethod Set_db
 	method Set_db {opt val} {
@@ -115,8 +117,11 @@ snit::widget metabrowser {
 	#
 	# adds a new browser tab over the database handle to $nb
 	method add_connection {conn_info} {
-		$nb add [browser $win.[cargocult::gensym browser] \
-			-db [dict get $conn_info db] -claimdb true
+		$nb add [
+			browser $win.[cargocult::gensym browser] \
+				-db [dict get $conn_info db] \
+				-claimdb true \
+				-personality ::dbluejay::personality::[dict get $conn_info personality]
 		] -text [dict get $conn_info nickname]
 	}
 }

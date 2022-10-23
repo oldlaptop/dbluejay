@@ -21,8 +21,7 @@ snit::widget dbsidebar {
 	}
 
 	# no personality by default (empty string for all "methods")
-	# See the body of the update method below for insight on the exciting
-	# future of personalities.
+	# See the header comment in personality.tcl for further information.
 	option -personality -default ::dbluejay::personality::none
 
 	constructor {args} {
