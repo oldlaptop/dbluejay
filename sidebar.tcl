@@ -53,51 +53,18 @@ snit::widget dbsidebar {
 
 		$tree delete [$tree children {}]
 
-		# All personalities have the tdbc tables and columns methods
-		$tree insert {} end -id tableroot -text Tables -open true
-		foreach table [dict keys [[$self cget -db] tables]] {
-			set tableitem [$tree insert tableroot end -text $table]
-			dict for {column attrs} [[$self cget -db] columns $table] {
-				$tree insert $tableitem end -text [
-					format "%s %s %s" $column [
-						dict get $attrs type
-					] [
-						expr {[dict get $attrs nullable]
-							? {}
-							: { NOT NULL}
-						}
-					]
-				]
-			}
-		}
-
-		# This represents the current extent of concrete plans for the
-		# behavior of "personalities": each personality should one day
-		# define a "frobs" method, returning a list of all the types of
-		# frob its database is supposed to support (views, stored
-		# procedures, that kind of thing). Each element of this list is
-		# tentatively planned to be a dict with the following keys:
-		#     name:   User-visible name for this frob
-		#     method: Method of the personality ensemble that accepts
-		#             a TDBC database handle and returns a list of all
-		#             frobs of this type in the database; each element
-		#             of this list is itself a dict with these keys:
-		#                 name:     User-visible name of this item
-		#                 subfrobs: List of user-visible strings to
-		#                           display as sub-items of this item
-		#                           (columns of a view?)
 		foreach frob [[$self cget -personality] frobs] {
 			set frobroot [$tree insert {} end -text [
 				dict get $frob name
-			]] -open true
+			] -open true]
 			foreach fritem [
 				[$self cget -personality] [
-					dict get $frob method [$self cget -db]
-				]
+					dict get $frob method
+				] [$self cget -db]
 			] {
 				set fritemroot [$tree insert $frobroot end -text [
 					dict get $fritem name
-				]
+				]]
 				foreach subfrob [dict get $fritem subfrobs] {
 					$tree insert $fritemroot end -text $subfrob
 				}
