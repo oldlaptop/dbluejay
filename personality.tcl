@@ -1,3 +1,5 @@
+package require cargocult
+
 # This namespace defines the supported "personalities", or SQL dialects (so to
 # speak). Each personality defines at least one kind of database object (or, as
 # we'll be calling them throughout this file, "frobs") that dbluejay can work
@@ -51,9 +53,9 @@ namespace eval none {
 	# things their corresponding TDBC drivers do.
 	proc tables {db {tablecmd format_table} {columncmd format_column}} {
 		lmap {table table_attrs} [$db tables] {
-			dict create name [$tablecmd $table $table_attrs] subfrobs [
+			dict create name [{*}$tablecmd $table $table_attrs] subfrobs [
 				lmap {column column_attrs} [$db columns $table] {
-					$columncmd $column $column_attrs
+					{*}$columncmd $column $column_attrs
 				}
 			]
 		}
@@ -79,6 +81,35 @@ namespace eval none {
 			}
 		]
 	}
+
+	namespace ensemble create
+}
+
+namespace eval sqlite3 {
+	# tdbc::sqlite3 lumps tables and views together, its tables method being
+	# pretty clearly a shim over SELECT * FROM sqlite_master, right down to
+	# including rootpage(!).
+	proc frobs {} {
+		return {
+			{name Relations method tables}
+		}
+	}
+	namespace export frobs
+
+	proc tables {db} {
+		[namespace parent]::none::tables $db {
+			apply {{table attrs} {
+				dict with attrs {
+					format "%s (%s)" [::cargocult::sql_name [
+						dict get $attrs tbl_name
+					]] [
+						dict get $attrs type
+					]
+				}
+			}}
+		}
+	}
+	namespace export tables
 
 	namespace ensemble create
 }
