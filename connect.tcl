@@ -372,17 +372,17 @@ proc show_connectdialog {driver rootwin} {
 }
 
 # Open a tdbc::sqlite3::connection object on a new file chosen by the user, and
-# generate a <<NewConnection>> event from the root window, with the object-
-# command in its -data field.
+# generate a <<NewConnection>> event from $rootwin, with an appropriate dict in
+# its -data field (as emitted by connectdialog).
 proc new_sqlite {rootwin} {
 	if {[set dbfile [tk_getSaveFile -filetypes {
 		{{SQLite databases} {.sqlite} BINA}
 		{{SQLite databases} {.db}     BINA}
 		{{All files}        *}
 	} -parent $rootwin -title "Create new SQLite database file"]] ne {}} {
-		event generate . <<NewConnection>> -data [
+		event generate $rootwin <<NewConnection>> -data [dict create db [
 			tdbc::sqlite3::connection new $dbfile
-		]
+		] nickname $dbfile personality sqlite3]
 	}
 }
 
