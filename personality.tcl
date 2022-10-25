@@ -85,6 +85,153 @@ namespace eval none {
 	namespace ensemble create
 }
 
+# Any database supporting the standard information schema, which is used to
+# enumerate views and routines.
+namespace eval information_schema {
+	proc frobs {} {
+		return {
+			{name Tables method tables}
+			{name Views method views}
+			{name Routines method routines}
+		}
+	}
+	namespace export frobs
+
+	proc tables {db} { [namespace parent]::none::tables $db }
+	namespace export tables
+
+	# exclude_schemae is a list of schema names to exclude from the results;
+	# if this personality is used directly we'll exclude the information
+	# schema itself, but derived personalities may want to additionally
+	# exclude internal views provided by their appropriate databases, such
+	# as postgres' pg_catalog.
+	proc views {db {exclude_schemae information_schema}} {
+		# XXX: this snippet probably belongs in libcargocult
+		set exclude_schemae_params [dict create]
+		foreach schema $exclude_schemae {
+			dict set exclude_schemae_params [::cargocult::gensym] $schema
+		}
+
+		lmap view_row [$db allrows [subst -novariables -nobackslashes {
+			SELECT
+				table_catalog,
+				table_schema,
+				table_name,
+				is_updatable
+			FROM information_schema.views
+			-- XXX: the join probably belongs in libcargocult
+			WHERE table_schema NOT IN ([join [lmap param [
+				dict keys $exclude_schemae_params
+			] {
+				lindex :$param
+			}] {, }])
+		}] $exclude_schemae_params] {
+			dict with view_row {}
+
+			dict create name [format "%s.%s.%s%s" [
+				::cargocult::sql_name $table_catalog
+			] [
+				::cargocult::sql_name $table_schema
+			] [
+				::cargocult::sql_name $table_name
+			] [
+				if {$is_updatable} {
+					lindex { (updatable)}
+				} else {
+					lindex {}
+				}
+			]] subfrobs [lmap col_row [$db allrows {
+				SELECT
+					column_name,
+					data_type
+				FROM information_schema.columns
+				WHERE table_name = :table_name
+				ORDER BY ordinal_position ASC
+			}] {
+				dict with col_row {}
+
+				format "%s %s" [
+					::cargocult::sql_name $column_name
+				] $data_type
+			}]
+		}
+	}
+	namespace export views
+
+	# exclude_schemae is used precisely as with views above; while the
+	# standard information schema doesn't define any routines to the
+	# author's knowledge, that doesn't mean a database won't include
+	# impertinent things in there for its own convenience (postgres), and
+	# derived personalities may want to exclude system stuff.
+	proc routines {db {exclude_schemae information_schema}} {
+		set exclude_schemae_params [dict create]
+		foreach schema $exclude_schemae {
+			dict set exclude_schemae_params [::cargocult::gensym] $schema
+		}
+
+		lmap routine_row [$db allrows [::cargocult::puts_through [subst -novariables -nobackslashes {
+			/*
+			 * The information schema provides a *lot* more
+			 * information than this, much of which isn't
+			 * necessarily pertinent in real database engines, or
+			 * even present in important ones (e.g mysql/mariadb).
+			 * We're constrained by the limited UI bandwidth
+			 * available and therefore don't show very much.
+			 */
+			SELECT
+				routine_catalog,
+				routine_schema,
+				routine_name,
+				specific_name,
+				routine_type,
+				COALESCE(data_type, '(void)') AS data_type
+			FROM information_schema.routines
+			WHERE routine_schema NOT IN ([join [lmap param [
+				dict keys $exclude_schemae_params
+			] {
+				lindex :$param
+			}] {, }])
+		}]] $exclude_schemae_params] {
+			dict with routine_row {}
+
+			dict create name [format "%s %s.%s.%s (%s)" $data_type [
+				::cargocult::sql_name $routine_catalog
+			] [
+				::cargocult::sql_name $routine_schema
+			] [
+				::cargocult::sql_name $routine_name
+			] $routine_type] subfrobs [lmap param_row [$db allrows {
+				SELECT
+					parameter_mode,
+					COALESCE(
+						parameter_name,
+						'(nameless)'
+					) AS parameter_name,
+					data_type
+				FROM information_schema.parameters
+				WHERE
+					specific_name = :specific_name
+					AND
+					/*
+					 * MySQL/MariaDB include a null row to
+					 * represent a function's return value
+					 */
+					parameter_mode IS NOT NULL
+				ORDER BY ordinal_position ASC
+			}] {
+				dict with param_row {}
+
+				format "%s %s %s" $parameter_mode [
+					::cargocult::sql_name $parameter_name
+				] $data_type
+			}]
+		}
+	}
+	namespace export routines
+
+	namespace ensemble create
+}
+
 namespace eval sqlite3 {
 	# tdbc::sqlite3 lumps tables and views together, its tables method being
 	# pretty clearly a shim over SELECT * FROM sqlite_master, right down to

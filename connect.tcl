@@ -49,7 +49,7 @@ namespace eval knobs {
 		}
 
 		method personality {} {
-			return none
+			return information_schema
 		}
 	}
 
@@ -180,6 +180,10 @@ namespace eval knobs {
 		}
 
 		method personality {} {
+			# The plain information_schema personality will work,
+			# but causes serious performance problems when postgres
+			# happily includes every single built-in function in
+			# information_schema.routines
 			return none
 		}
 	}
