@@ -28,6 +28,24 @@ package require cargocult
 # database engines or TDBC drivers will also define at least a "view" frob.
 namespace eval dbluejay::personality {
 
+proc personalities {} {
+	lmap full_ns [namespace children] {
+		namespace tail $full_ns
+	}
+}
+proc generic_personalities {} {
+	lmap name [personalities] {
+		if {$name eq {sqlite3}} {
+			# The sqlite3 personality assumes it's actually
+			# using the core tdbc::sqlite3 driver, and won't
+			# work through ODBC.
+			continue
+		} else {
+			lindex $name
+		}
+	}
+}
+
 # Generic baseline personality: boring, but works on any conforming TDBC driver
 namespace eval none {
 	# All conforming TDBC drivers have the tables and columns methods.

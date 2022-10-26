@@ -64,6 +64,7 @@ namespace eval knobs {
 		variable Driver {}
 		variable DSN {}
 		variable connstr {}
+		variable personality {none}
 
 		constructor {args} {
 			ttk::radiobutton $win.drivercheck -text Driver -variable [
@@ -83,6 +84,13 @@ namespace eval knobs {
 			] -textvariable [myvar DSN] -validatecommand [
 				mymethod Gen_connstr
 			] -validate focus
+
+			ttk::label $win.personalityl -text {SQL personality:}
+			ttk::combobox $win.personality -textvariable [
+				myvar personality
+			] -state readonly -values [
+				::dbluejay::personality::generic_personalities
+			]
 
 			install optrows using cargocult::dynrows $win.optrows \
 				-newrow cargocult::kvpair -rowopts [list \
@@ -108,11 +116,12 @@ namespace eval knobs {
 
 			ttk::entry $win.connstren -textvariable [myvar connstr]
 
-			grid $win.drivercheck $win.drivers $win.dsncheck $win.dsns -sticky new
-			grid $optrows         -            -             -         -sticky nsew
-			grid $win.connstren   -            -             -         -sticky sew
+			grid $win.drivercheck  $win.drivers     $win.dsncheck $win.dsns -sticky new
+			grid $win.personalityl $win.personality x             x         -sticky ew
+			grid $optrows          -                -             -         -sticky nsew
+			grid $win.connstren    -                -             -         -sticky sew
 
-			grid rowconfigure $win 1 -weight 1
+			grid rowconfigure $win 2 -weight 1
 			grid columnconfigure $win {1 3} -weight 1
 			cargocult::pad_grid_widgets [winfo children $win]
 
@@ -139,7 +148,7 @@ namespace eval knobs {
 		}
 
 		method personality {} {
-			return none
+			return $personality
 		}
 	}
 
@@ -245,6 +254,7 @@ namespace eval knobs {
 
 		variable package
 		variable conncmd
+		variable personality none
 
 		constructor {args} {
 			ttk::label $win.packagel -text "Driver package name:"
@@ -253,8 +263,14 @@ namespace eval knobs {
 			ttk::label $win.conncmdl -text "Connection command:"
 			ttk::entry $win.conncmden -textvariable [myvar conncmd]
 
-			grid $win.packagel $win.packageen -sticky new
-			grid $win.conncmdl $win.conncmden -sticky new
+			ttk::label $win.personalityl -text {SQL personality:}
+			ttk::combobox $win.personality -textvariable [
+				myvar personality
+			] -state readonly -values [::dbluejay::personality::personalities]
+
+			grid $win.packagel     $win.packageen   -sticky new
+			grid $win.conncmdl     $win.conncmden   -sticky new
+			grid $win.personalityl $win.personality -sticky new
 
 			grid columnconfigure $win 1 -weight 1
 			::cargocult::pad_grid_widgets [winfo children $win]
@@ -268,7 +284,7 @@ namespace eval knobs {
 		}
 
 		method personality {} {
-			return none
+			return $personality
 		}
 	}
 }
