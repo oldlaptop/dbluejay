@@ -169,7 +169,7 @@ namespace eval information_schema {
 			dict set exclude_schemae_params [::cargocult::gensym] $schema
 		}
 
-		lmap routine_row [$db allrows [::cargocult::puts_through [subst -novariables -nobackslashes {
+		lmap routine_row [$db allrows [subst -novariables -nobackslashes {
 			/*
 			 * The information schema provides a *lot* more
 			 * information than this, much of which isn't
@@ -191,7 +191,7 @@ namespace eval information_schema {
 			] {
 				lindex :$param
 			}] {, }])
-		}]] $exclude_schemae_params] {
+		}] $exclude_schemae_params] {
 			dict with routine_row {}
 
 			dict create name [format "%s %s.%s.%s (%s)" $data_type [
