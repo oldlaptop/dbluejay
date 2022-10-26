@@ -2,14 +2,23 @@ DBlueJay is a general-purpose database GUI, to TDBC what dbeaver is to JDBC,
 but like a blue jay it weighs much less than a beaver. (Hopefully it is less
 loud and obnoxious than real blue jays.) All of the core TDBC drivers have at
 least some support, and some level of database-specific schema enumeration is
-performed for the SQLite3 and PostgreSQL drivers; MySQL also gets a little more
-schema enumeration than the TDBC specification provides through the standard
-INFORMATION_SCHEMA. DBlueJay is far and away the smallest database-browsing GUI
-(let alone the smallest universal one) known to its author, and has the
-corresponding level of creature comforts; its main design goal is to allow easy
-prototyping of complex queries, with a browsable schema and result-set view that
-don't interfere with the query editor (as a CLI database monitor generally does
-without extra fiddling).
+performed for the SQLite3 and PostgreSQL drivers. (MySQL also gets a little more
+schema enumeration than the TDBC specification provides, through the standard
+INFORMATION_SCHEMA). Some rudimentary support for using these different database
+personalities through the core ODBC driver, or through arbitrary TDBC drivers,
+also exists. (The information_schema personality, for example, is known to work
+with Microsoft SQL Server 2019 in cursory testing).
+
+DBlueJay is far and away the smallest relational-database-browsing GUI (let
+alone the smallest universal one) known to its author, and has the corresponding
+level of creature comforts. Its main design goal is to allow easy prototyping of
+complex queries, with a browsable schema and result-set view that don't
+interfere with the query editor (as a CLI database monitor generally does
+without extra fiddling). It was also motivated by the apparent lack of a simple
+cross-platform GUI application (as opposed to web interfaces such as pgAdmin 4)
+that properly supports recent versions of PostgreSQL, and by the various sins
+(severe bloat, running only on Windows) of Microsoft's SQL Server Management
+Studio.
 
 Installation should be reasonably straightforward with the included Makefile;
 try running the default target for more information. Besides Tcl and Tk (8.6+)
@@ -17,6 +26,14 @@ themselves, you'll need TDBC and an appropriate selection of TDBC drivers (this
 may or may not be a separate package from Tcl itself on free *NIX systems),
 tcllib (for Snit), and my libcargocult, the installation procedure for which
 is very much like that for DBlueJay (https://github.com/oldlaptop/libcargocult).
+
+Note that due to an upstream bug in tdbc::postgres (ticket 14dee3be9a), many
+real PostgreSQL databases (those that involve data types other than the TDBC
+standard types) will fail to work correctly with DBlueJay as of this writing,
+when using unmodified tdbc::postgres sources. Using a build of tdbc::postgres
+with the following patch applied remedies this problem:
+
+https://core.tcl-lang.org/tdbcpostgres/artifact/9e9bf4d5ffddf091
 
 Documentation other than the file you're reading may at this time be found
 inline in the source code.
