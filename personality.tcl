@@ -90,6 +90,10 @@ namespace eval none {
 	# a dict and provide at least the type, precision, scale, and nullable
 	# keys; we only bother with type and nullability.
 	proc format_column {column attrs} {
+		if {![dict exists $attrs type]} {
+			dict set attrs type {(missing because the TDBC driver is broken)}
+		}
+
 		format "%s %s %s" $column [
 			dict get $attrs type
 		] [
