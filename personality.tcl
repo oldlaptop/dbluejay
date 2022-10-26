@@ -232,6 +232,87 @@ namespace eval information_schema {
 	namespace ensemble create
 }
 
+# Mostly a shim over information_schema, excluding postgres internals; we will
+# however use some of those postgres internals to enumerate indexes.
+namespace eval postgres {
+	proc frobs {} {
+		return {
+			{name Tables method tables}
+			{name Views method views}
+			{name Routines method routines}
+			{name Indexes method indexes}
+		}
+	}
+	namespace export frobs
+
+	# Forward a call to information_schema, excluding the pg_catalog schema
+	# (which includes numerous mostly-impertinent things, including among
+	# much else every one of postgres' built-in functions)
+	proc Forward {frob db} {
+		[namespace parent]::information_schema::$frob $db {
+			information_schema
+			pg_catalog
+		}
+	}
+
+	proc tables {db} { [namespace parent]::information_schema::tables $db }
+	namespace export tables
+
+	proc views {db} { Forward views $db }
+	namespace export views
+
+	proc routines {db} { Forward routines $db }
+	namespace export routines
+
+	# Enumerate indexes from postgres' system catalogs.
+	proc indexes {db} {
+		set indexes [dict create]
+		$db foreach index_field_row {
+			SELECT
+				nspname,
+				index_class.relname AS index_name,
+				table_class.relname AS table_name,
+				PG_GET_INDEXDEF(
+					indexrelid,
+					GENERATE_SUBSCRIPTS(
+						indkey, 1
+					) + 1, -- "column 0" is the whole index
+					TRUE
+				) AS field_definition
+			FROM
+				pg_class AS index_class JOIN
+				pg_namespace ON (
+					pg_namespace.oid = index_class.relnamespace
+				) JOIN
+				pg_index ON (
+					index_class.oid = pg_index.indexrelid
+				) JOIN
+				pg_class AS table_class ON (
+					pg_index.indrelid = table_class.oid
+				)
+			WHERE nspname NOT IN ( 'pg_catalog', 'pg_toast' )
+			ORDER BY index_class.relname ASC
+		} {
+			dict with index_field_row {}
+
+			dict lappend indexes [format "%s.%s ON %s" [
+				::cargocult::sql_name $nspname
+			] [
+				::cargocult::sql_name $index_name
+			] [
+				::cargocult::sql_name $table_name
+			]] $field_definition
+		}
+
+		return [lmap {index fields} $indexes {
+			dict create name $index subfrobs $fields
+		}]
+	}
+	namespace export indexes
+
+	namespace ensemble create
+}
+
 namespace eval sqlite3 {
 	# tdbc::sqlite3 lumps tables and views together, its tables method being
 	# pretty clearly a shim over SELECT * FROM sqlite_master, right down to

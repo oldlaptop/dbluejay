@@ -184,7 +184,7 @@ namespace eval knobs {
 			# but causes serious performance problems when postgres
 			# happily includes every single built-in function in
 			# information_schema.routines
-			return none
+			return postgres
 		}
 	}
 
