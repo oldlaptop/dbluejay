@@ -1,13 +1,18 @@
 DBlueJay is a general-purpose database GUI, to TDBC what dbeaver is to JDBC,
 but like a blue jay it weighs much less than a beaver. (Hopefully it is less
-loud and obnoxious than real blue jays.) In its current form it may be regarded
-as an experiment in building a universal database browser from as little code as
-possible (currently some 800SLOC, which datum is "generated using David
-A. Wheeler's SLOCCount"), but it is likely to grow in the future (though not to
-beaver-like proportions).
+loud and obnoxious than real blue jays.) All of the core TDBC drivers have at
+least some support, and some level of database-specific schema enumeration is
+performed for the SQLite3 and PostgreSQL drivers; MySQL also gets a little more
+schema enumeration than the TDBC specification provides through the standard
+INFORMATION_SCHEMA. DBlueJay is far and away the smallest database-browsing GUI
+(let alone the smallest universal one) known to its author, and has the
+corresponding level of creature comforts; its main design goal is to allow easy
+prototyping of complex queries, with a browsable schema and result-set view that
+don't interfere with the query editor (as a CLI database monitor generally does
+without extra fiddling).
 
 Installation should be reasonably straightforward with the included Makefile;
-try running the default target for more information. Besides Tcl and Tk
+try running the default target for more information. Besides Tcl and Tk (8.6+)
 themselves, you'll need TDBC and an appropriate selection of TDBC drivers (this
 may or may not be a separate package from Tcl itself on free *NIX systems),
 tcllib (for Snit), and my libcargocult, the installation procedure for which
